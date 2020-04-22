@@ -2,17 +2,26 @@
 
 # The destination image to push to.
 export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
-# The versions of Drupal to create tags for. These should be versions compatible
-# with the Composer drupal/recommended-project package, which can be found at
-# https://github.com/drupal/recommended-project
-export DRUPAL_VERSIONS ?= $(shell curl --silent https://api.github.com/repos/drupal/recommended-project/tags | jq -r '.[].name')
 # The version of PHP.
 export PHP_VERSION ?= 7.3
 
+## You probably don't need to modify any of the following.
+# Look up the versions of Drupal to create tags for by querying the Composer
+# drupal/recommended-project package, which can be found at
+# https://github.com/drupal/recommended-project
+export DRUPAL_VERSIONS := $(shell curl --silent https://api.github.com/repos/drupal/recommended-project/tags | jq -r '.[].name' | sort --version-sort)
 # Today's date.
 export DATE := $(shell date "+%Y-%m-%d")
 # The directory to keep track of build steps.
 export BUILD_DIR := build-${DATE}
+# The sed to use. On Mac, you will need to install Gnu sed and define SED as
+# gsed. For example, "$ SED=gsed make [command]".
+export SED ?= sed
+# Determine the major and minor version from a full Drupal version.
+export DRUPAL_MAJ_MIN = $(shell echo $(*) | $(SED) -re 's/^([0-9]+\.[0-9]+)\..+/\1/')
+# Determine the most recent version for this Drupal version. For example, given
+# versions 8.8.1, 8.8.2, 8.8.3, if 8.8.1 is passed, 8.8.3 is returned.
+export DRUPAL_LATEST_MAJ_MIN = $(lastword $(filter $(DRUPAL_MAJ_MIN).%,$(DRUPAL_VERSIONS)))
 
 .PHONY: all
 all: push-image ## Run all the targets in this Makefile required to tag a new Docker image.
@@ -33,7 +42,7 @@ targets: ## Print out the available make targets.
 	@printf "\nFor more targets and info see the comments in the Makefile.\n"
 
 .PHONY: push-image
-push-image: tag
+push-image: tag ## Push the tagged images to the docker registry.
 #	# Push the images.
 	docker push ${DESTINATION_DOCKER_IMAGE}
 #	# Clean up after ourselves.
@@ -49,14 +58,18 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 	  --build-arg DRUPAL_VERSION=$(*) \
 	  --build-arg PHP_VERSION=$(PHP_VERSION) \
 	  -t $(DESTINATION_DOCKER_IMAGE):$(*) .
+#	# If this is the most recent major and minor version, tag it as such.
+	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN); \
+	fi
 	@touch $(@)
 
 ${BUILD_DIR}:
 	mkdir -p ${BUILD_DIR}
 	@printf "Prepared build environment.\n"
 
-clean:
-#	# Remove the destination image.
-	docker rmi $(addprefix $(DESTINATION_DOCKER_IMAGE):,$(DRUPAL_VERSIONS)) || true
+clean: ## Clean up all locally tagged Docker images and build directories.
+#	# Delete all image tags.
+	-docker rmi $(addprefix $(DESTINATION_DOCKER_IMAGE):,$(DRUPAL_VERSIONS))
 #	# Remove the build dir.
-	rm -r ${BUILD_DIR} || true
+	-rm -r ${BUILD_DIR}
