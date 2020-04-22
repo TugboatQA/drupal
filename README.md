@@ -46,6 +46,16 @@ services:
           --site-name=Olivero \
           --account-pass=${ADMIN_PASSWORD} \
           site:install standard
+
+        # Enable the theme.
+        vendor/bin/drush --yes theme:enable olivero
+        # Set the olivero theme as default.
+        vendor/bin/drush --yes config-set system.theme default olivero
+        # Rebuild cache.
+        vendor/bin/drush cache:rebuild
+
+        # Set up the files directory permissions.
+        mkdir -p $DRUPAL_DOCROOT/sites/default/files
         chgrp -R www-data $DRUPAL_DOCROOT/sites/default/files
         chmod 2775 $DRUPAL_DOCROOT/sites/default/files
         chmod -R g+w $DRUPAL_DOCROOT/sites/default/files
@@ -57,7 +67,7 @@ services:
         composer install --optimize-autoloader
         # Update this module, including all dependencies.
         composer update drupal/olivero --with-all-dependencies
-        vendor/bin/drush updb
+        vendor/bin/drush --yes updb
         vendor/bin/drush cache:rebuild
 
   mysql:
