@@ -20,10 +20,6 @@ services:
     default: true
     http: false
     depends: mysql
-    aliases:
-      - preloaded
-      - minimal
-      - standard
     commands:
       update: |
         set -eux
