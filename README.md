@@ -25,9 +25,6 @@ services:
       - minimal
       - standard
     commands:
-      init:
-        - cp .tugboat/sites.php $DRUPAL_DOCROOT/sites/sites.php
-
       update: |
         set -eux
         # Check out a branch using the unique Tugboat ID for this repository, to
