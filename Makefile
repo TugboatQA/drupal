@@ -1,11 +1,11 @@
 # Run "make help" to see a description of the targets in this Makefile.
 
 # The destination image to push to.
-export DESTINATION_DOCKER_IMAGE ?= quay.io/q0rban/drupal
+export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
 # The versions of Drupal to create tags for. These should be versions compatible
 # with the Composer drupal/recommended-project package, which can be found at
 # https://github.com/drupal/recommended-project
-export DRUPAL_VERSIONS ?= 9.0.0-alpha1 8.8
+export DRUPAL_VERSIONS ?= $(shell curl --silent https://api.github.com/repos/drupal/recommended-project/tags | jq -r '.[].name')
 # The version of PHP.
 export PHP_VERSION ?= 7.3
 
