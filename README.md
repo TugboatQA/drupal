@@ -86,24 +86,3 @@ Composer project. In addition, `[MAJOR].[MINOR]` tags are available. For
 example, if you would like the latest `9.0.x` version of Drupal core, you can
 use `tugboatqa/drupal:9.0`, which, at the time of this writing, is equivalent to
 `tugboatqa/drupal:9.0.0-beta2`.
-
-# Contributing
-
-To run the build scripts on your local build environment, you will need the
-following commands available in your build environment:
-
-- `make`
-- `curl`
-- [`jq`](https://stedolan.github.io/jq/)
-
-Once configured, run `make help` to see a list of available commands.
-
-To build the different Docker tags and push them, run `make`.
-
-# Customizing
-
-To create a custom image for your own project, you may fork this repository,
-edit the [Makefile](./Makefile) and modify:
-
-- `DESTINATION_DOCKER_IMAGE`: the location where the Docker image will be hosted.
-- `PHP_VERSION`: The version of PHP to use.
