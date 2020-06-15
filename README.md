@@ -62,6 +62,8 @@ services:
 
       build: |
         set -eux
+        # Delete and re-check out this branch in case this is built from a Base Preview.
+        git branch -D $TUGBOAT_REPO_ID && git checkout -b $TUGBOAT_REPO_ID || true
         export COMPOSER_MEMORY_LIMIT=-1
         cd $DRUPAL_COMPOSER_ROOT
         composer install --optimize-autoloader
