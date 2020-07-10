@@ -16,7 +16,7 @@ adapted from the [Olivero theme](https://drupal.org/project/olivero) for Drupal
 ```yaml
 services:
   php:
-    image: tugboatqa/drupal:8.8
+    image: q0rban/tugboat-drupal:8.8
     default: true
     http: false
     depends: mysql
@@ -86,5 +86,4 @@ The available tags for this image are taken directly from the available tags
 of the [`drupal/recommended-project`](https://github.com/drupal/recommended-project/tags)
 Composer project. In addition, `[MAJOR].[MINOR]` tags are available. For
 example, if you would like the latest `9.0.x` version of Drupal core, you can
-use `tugboatqa/drupal:9.0`, which, at the time of this writing, is equivalent to
-`tugboatqa/drupal:9.0.0-beta2`.
+use `q0rban/tugboat-drupal:9.0`.
