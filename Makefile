@@ -22,6 +22,8 @@ export DRUPAL_MAJ_MIN = $(shell echo $(*) | $(SED) -re 's/^([0-9]+\.[0-9]+)\..+/
 # Determine the most recent version for this Drupal version. For example, given
 # versions 8.8.1, 8.8.2, 8.8.3, if 8.8.1 is passed, 8.8.3 is returned.
 export DRUPAL_LATEST_MAJ_MIN = $(lastword $(filter $(DRUPAL_MAJ_MIN).%,$(DRUPAL_VERSIONS)))
+# Determine the most recent stable version of Drupal, which is the lastword.
+export DRUPAL_LATEST := $(lastword $(DRUPAL_VERSIONS))
 
 .PHONY: all
 all: push-image ## Run all the targets in this Makefile required to tag a new Docker image.
@@ -61,6 +63,10 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 #	# If this is the most recent major and minor version, tag it as such.
 	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN); \
+	fi
+#	# If this is the latest stable Drupal version, tag it with latest.
+	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest \
 	fi
 	@touch $(@)
 
