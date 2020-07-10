@@ -66,7 +66,7 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 	fi
 #	# If this is the latest stable Drupal version, tag it with latest.
 	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest; \
 	fi
 	@touch $(@)
 
