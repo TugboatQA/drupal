@@ -3,7 +3,7 @@
 # The destination image to push to.
 export DESTINATION_DOCKER_IMAGE ?= q0rban/tugboat-drupal
 # The version of PHP.
-export PHP_VERSION ?= 7.3
+export PHP_VERSION ?= 7.4
 
 ## You probably don't need to modify any of the following.
 # Look up the versions of Drupal to create tags for by querying the Composer
