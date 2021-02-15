@@ -7,7 +7,11 @@ ARG COMPOSER_MEMORY_LIMIT
 ENV DRUPAL_COMPOSER_ROOT /var/www/drupal
 ENV DRUPAL_DOCROOT $DRUPAL_COMPOSER_ROOT/web
 
-RUN composer create-project drupal/recommended-project:$DRUPAL_VERSION $DRUPAL_COMPOSER_ROOT || \
+RUN apt-get update && \
+  apt-get -y install libzip-dev && \
+  apt-get clean && \
+  docker-php-ext-install zip && \
+  composer create-project drupal/recommended-project:$DRUPAL_VERSION $DRUPAL_COMPOSER_ROOT || \
 # Try composer 1 if the above fails.
   ( \
     composer self-update --1 && \
