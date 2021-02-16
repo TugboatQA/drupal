@@ -26,9 +26,6 @@ services:
         # Check out a branch using the unique Tugboat ID for this repository, to
         # ensure we don't clobber an existing branch.
         git checkout -b $TUGBOAT_REPO_ID
-        # Composer is hungry. You need a Tugboat project with a pretty sizeable
-        # chunk of memory.
-        export COMPOSER_MEMORY_LIMIT=-1
         # This is an environment variable we added in the Dockerfile that
         # provides the path to Drupal composer root (not the web root).
         cd $DRUPAL_COMPOSER_ROOT
@@ -63,8 +60,8 @@ services:
       build: |
         set -eux
         # Delete and re-check out this branch in case this is built from a Base Preview.
-        git branch -D $TUGBOAT_REPO_ID && git checkout -b $TUGBOAT_REPO_ID || true
-        export COMPOSER_MEMORY_LIMIT=-1
+        git branch -D $TUGBOAT_REPO_ID || true
+        git checkout -b $TUGBOAT_REPO_ID || true
         cd $DRUPAL_COMPOSER_ROOT
         composer install --optimize-autoloader
         # Update this module, including all dependencies.
