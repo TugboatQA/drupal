@@ -1,13 +1,12 @@
 ARG PHP_VERSION
 FROM tugboatqa/php:${PHP_VERSION}-apache
-
 ARG DRUPAL_VERSION
-ARG COMPOSER_MEMORY_LIMIT
 
-ENV DRUPAL_COMPOSER_ROOT /var/www/drupal
-ENV DRUPAL_DOCROOT $DRUPAL_COMPOSER_ROOT/web
+ENV DRUPAL_COMPOSER_ROOT="/var/www/drupal" \
+    DRUPAL_DOCROOT="/var/www/drupal/web" \
+    COMPOSER_MEMORY_LIMIT=-1
 
-RUN apt-get update && \
+RUN set -x && apt-get update && \
   apt-get -y install libzip-dev && \
   apt-get clean && \
   docker-php-ext-install zip && \

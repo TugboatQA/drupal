@@ -56,7 +56,6 @@ tag: $(addprefix ${BUILD_DIR}/build-image-,$(DRUPAL_VERSIONS)) ## Create the tag
 ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 #	# Build the Dockerfile in this directory.
 	docker build \
-	  --build-arg COMPOSER_MEMORY_LIMIT=-1 \
 	  --build-arg DRUPAL_VERSION=$(*) \
 	  --build-arg PHP_VERSION=$(PHP_VERSION) \
 	  -t $(DESTINATION_DOCKER_IMAGE):$(*) .
