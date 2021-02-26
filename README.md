@@ -13,6 +13,7 @@ Here is an example configuration that makes use of the images from this repo,
 adapted from the [Olivero theme](https://drupal.org/project/olivero) for Drupal
 `8.8.x`.
 
+**Example `.tugboat/config.yml` file:**
 ```yaml
 services:
   php:
