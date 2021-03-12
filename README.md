@@ -17,7 +17,7 @@ adapted from the [Olivero theme](https://drupal.org/project/olivero) for Drupal
 ```yaml
 services:
   php:
-    image: q0rban/tugboat-drupal:8.8
+    image: q0rban/tugboat-drupal:9.0
     default: true
     http: false
     depends: mysql
@@ -35,7 +35,7 @@ services:
         composer config repositories.tugboat vcs $TUGBOAT_ROOT
         # Now we can require this theme, specifing the branch name we created
         # above that uses the $TUGBOAT_REPO_ID environment variable.
-        composer require drupal/olivero:dev-$TUGBOAT_REPO_ID -vvv
+        composer require drupal/olivero:dev-$TUGBOAT_REPO_ID
 
         # Install Drupal on the site.
         vendor/bin/drush \
