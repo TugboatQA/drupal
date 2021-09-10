@@ -11,7 +11,8 @@ jobs:
             apk update
             apk --upgrade add build-base rsync curl jq
 
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 20.10.6
 
       # build and push Docker image
       - run:
