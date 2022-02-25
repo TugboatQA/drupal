@@ -2,8 +2,6 @@
 
 # The destination image to push to.
 export DESTINATION_DOCKER_IMAGE ?= q0rban/tugboat-drupal
-# The version of PHP.
-export PHP_VERSION ?= 7.4
 
 ## You probably don't need to modify any of the following.
 # Look up the versions of Drupal to create tags for by querying the Composer
@@ -20,16 +18,22 @@ export DRUPAL_VERSIONS := $(shell \
 export DATE := $(shell date "+%Y-%m-%d")
 # The directory to keep track of build steps.
 export BUILD_DIR := build-${DATE}
-# The sed to use. On Mac, you will need to install Gnu sed and define SED as
-# gsed. For example, "$ SED=gsed make [command]".
-export SED ?= sed
+
+# Determine the major version from a full Drupal version.
+export DRUPAL_MAJ = $(shell echo $(*)  | awk -F . '{print $$1}')
 # Determine the major and minor version from a full Drupal version.
-export DRUPAL_MAJ_MIN = $(shell echo $(*) | $(SED) -re 's/^([0-9]+\.[0-9]+)\..+/\1/')
+export DRUPAL_MAJ_MIN = $(shell echo $(*) | awk -F . '{print $$1"."$$2}')
 # Determine the most recent version for this Drupal version. For example, given
 # versions 8.8.1, 8.8.2, 8.8.3, if 8.8.1 is passed, 8.8.3 is returned.
 export DRUPAL_LATEST_MAJ_MIN = $(lastword $(filter $(DRUPAL_MAJ_MIN).%,$(DRUPAL_VERSIONS)))
 # Determine the most recent stable version of Drupal, which is the lastword.
 export DRUPAL_LATEST := $(lastword $(DRUPAL_VERSIONS))
+# Determine the correct version of PHP for the Drupal version.
+# See https://www.drupal.org/docs/system-requirements/php-requirements
+D10_PHP_VERSION := 8.1
+D9_PHP_VERSION := 8.0
+D8_PHP_VERSION := 7.4
+export PHP_VERSION = $(D$(DRUPAL_MAJ)_PHP_VERSION)
 
 .PHONY: all
 all: push-image ## Run all the targets in this Makefile required to tag a new Docker image.
