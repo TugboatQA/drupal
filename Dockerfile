@@ -10,6 +10,8 @@ RUN set -x && apt-get update && \
   apt-get -y install libzip-dev && \
   apt-get clean && \
   docker-php-ext-install zip && \
+  docker-php-ext-install opcache && \
+  a2enmod headers rewrite && \
   composer create-project drupal/recommended-project:$DRUPAL_VERSION $DRUPAL_COMPOSER_ROOT || \
 # Try composer 1 if the above fails.
   ( \
@@ -22,10 +24,10 @@ RUN set -x && apt-get update && \
 # to get around this for now I just require a dev project even though it isn't
 # actually necessary.
   composer require --dev drupal/core-dev:^$DRUPAL_VERSION && \
-  composer require drush/drush && \
+  composer require drush/drush || \
+# Try drush 11.x-dev if the above fails.
+  composer require drush/drush:11.x-dev  && \
   mkdir -p $DRUPAL_DOCROOT/sites/default/files && \
   chgrp www-data $DRUPAL_DOCROOT/sites/default/files && \
   chmod 2775 $DRUPAL_DOCROOT/sites/default/files && \
-  docker-php-ext-install opcache && \
-  a2enmod headers rewrite && \
   ln -snf $DRUPAL_DOCROOT $DOCROOT
