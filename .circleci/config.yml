@@ -9,7 +9,7 @@ jobs:
           name: Prepare build environment
           command: |
             apk update
-            apk --upgrade add build-base rsync curl jq
+            apk --upgrade add build-base rsync curl jq coreutils
 
       - setup_remote_docker:
           version: 20.10.6
