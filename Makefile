@@ -9,7 +9,13 @@ export PHP_VERSION ?= 7.4
 # Look up the versions of Drupal to create tags for by querying the Composer
 # drupal/recommended-project package, which can be found at
 # https://github.com/drupal/recommended-project
-export DRUPAL_VERSIONS := $(shell curl --silent https://api.github.com/repos/drupal/recommended-project/tags | jq -r '.[].name' | sort -V)
+# The sort command splits columns by hyphen and -u will ensure only uniques for
+# the first column, so that if 10.0.0 and 10.0.0-rc4 are in the list, only the
+# former will be used.
+export DRUPAL_VERSIONS := $(shell \
+  curl --silent https://api.github.com/repos/drupal/recommended-project/tags | \
+  jq -r '.[].name' | \
+  sort -t '-' -uV -k 1.1,1.0)
 # Today's date.
 export DATE := $(shell date "+%Y-%m-%d")
 # The directory to keep track of build steps.
