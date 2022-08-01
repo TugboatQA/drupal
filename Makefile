@@ -31,7 +31,7 @@ export DRUPAL_LATEST := $(lastword $(DRUPAL_VERSIONS))
 # Determine the correct version of PHP for the Drupal version.
 # See https://www.drupal.org/docs/system-requirements/php-requirements
 D10_PHP_VERSION := 8.1
-D9_PHP_VERSION := 8.0
+D9_PHP_VERSION := 8.1
 D8_PHP_VERSION := 7.4
 export PHP_VERSION = $(D$(DRUPAL_MAJ)_PHP_VERSION)
 
