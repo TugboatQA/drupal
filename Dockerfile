@@ -20,13 +20,9 @@ RUN set -x && apt-get update && \
     composer create-project drupal/recommended-project:$DRUPAL_VERSION $DRUPAL_COMPOSER_ROOT \
   ) && \
   cd $DRUPAL_COMPOSER_ROOT && \
-# Not sure why but require-dev being empty in the composer.json causes issues so
-# to get around this for now I just require a dev project even though it isn't
-# actually necessary.
-  composer require --dev drupal/core-dev:^$DRUPAL_VERSION && \
   composer require drush/drush || \
 # Try drush 11.x-dev if the above fails.
-  composer require drush/drush:11.x-dev  && \
+  composer require drush/drush:11.x-dev && \
   mkdir -p $DRUPAL_DOCROOT/sites/default/files && \
   chgrp www-data $DRUPAL_DOCROOT/sites/default/files && \
   chmod 2775 $DRUPAL_DOCROOT/sites/default/files && \
