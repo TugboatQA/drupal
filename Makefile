@@ -21,6 +21,9 @@ export BUILD_DIR := build-${DATE}
 
 # Determine the major version from a full Drupal version.
 export DRUPAL_MAJ = $(shell echo $(*)  | awk -F . '{print $$1}')
+# Determine the most recent version for this Drupal version. For example, given
+# versions 8.8.1, 8.8.2, 8.8.3, if 8.8.1 is passed, 8.8.3 is returned.
+export DRUPAL_LATEST_MAJ = $(lastword $(filter $(DRUPAL_MAJ).%,$(DRUPAL_VERSIONS)))
 # Determine the major and minor version from a full Drupal version.
 export DRUPAL_MAJ_MIN = $(shell echo $(*) | awk -F . '{print $$1"."$$2}')
 # Determine the most recent version for this Drupal version. For example, given
@@ -72,6 +75,10 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 #	# If this is the most recent major and minor version, tag it as such.
 	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN); \
+	fi
+#	# If this is the most recent major version, tag it as such.
+	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ)" ]; then \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ); \
 	fi
 #	# If this is the latest stable Drupal version, tag it with latest.
 	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
