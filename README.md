@@ -82,6 +82,8 @@ above to use the appropriate Docker image with the same major version of Drupal.
 
 The available tags for this image are taken directly from the available tags
 of the [`drupal/recommended-project`](https://github.com/drupal/recommended-project/tags)
-Composer project. In addition, `[MAJOR].[MINOR]` tags are available. For
-example, if you would like the latest `9.0.x` version of Drupal core, you can
-use `q0rban/tugboat-drupal:9.0`.
+Composer project. In addition, `[MAJOR]` and `[MAJOR].[MINOR]` tags are available. For
+example, if you would like the latest `10.0.x` version of Drupal core, you can
+use `q0rban/tugboat-drupal:10.0`. If you only want to specify the major version
+and keep up with minor releases automatically, you can use 
+`q0rban/tugboat-drupal:10`.
