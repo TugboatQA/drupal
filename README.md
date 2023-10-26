@@ -30,6 +30,10 @@ services:
         # This is an environment variable we added in the Dockerfile that
         # provides the path to Drupal composer root (not the web root).
         cd $DRUPAL_COMPOSER_ROOT
+        # If you need to change the minimum stability due to downstream
+        # dependencies, you can modify 'stable' below to your needs:
+        # see https://getcomposer.org/doc/04-schema.md#minimum-stability
+        composer config minimum-stability stable
         # We configure the Drupal project to use the checkout of the module as a
         # Composer package repository.
         composer config repositories.tugboat vcs $TUGBOAT_ROOT
