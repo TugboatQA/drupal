@@ -56,7 +56,7 @@ targets: ## Print out the available make targets.
 .PHONY: push-image
 push-image: tag ## Push the tagged images to the docker registry.
 #	# Push the images.
-	docker push ${DESTINATION_DOCKER_IMAGE}
+	docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
 #	# Clean up after ourselves.
 	$(MAKE) clean
 
