@@ -14,6 +14,8 @@ export DRUPAL_VERSIONS := $(shell \
   curl --silent https://api.github.com/repos/drupal/recommended-project/tags | \
   jq -r '.[].name' | \
   sort -t '-' -uV -k 1.1,1.0)
+export BLEEDING_EDGE_VERSION := 11.x@dev
+export BLEEDING_EDGE_TAG := 11-dev
 # Today's date.
 export DATE := $(shell date "+%Y-%m-%d")
 # The directory to keep track of build steps.
@@ -57,7 +59,7 @@ targets: ## Print out the available make targets.
 .PHONY: push-image
 push-image: tag ## Push the tagged images to the docker registry.
 #	# Push the images.
-	docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
+	#docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
 #	# Clean up after ourselves.
 	$(MAKE) clean
 
@@ -79,6 +81,11 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest; \
 	fi
+	# Extra! Get the bleeding edge one!
+	docker build \
+	  --build-arg DRUPAL_VERSION=$(BLEEDING_EDGE_VERSION) \
+	  --build-arg PHP_VERSION=$(D11_PHP_VERSION) \
+	  -t $(DESTINATION_DOCKER_IMAGE):$(BLEEDING_EDGE_TAG) .
 	@touch $(@)
 
 ${BUILD_DIR}:

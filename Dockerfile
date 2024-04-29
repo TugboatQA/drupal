@@ -24,7 +24,8 @@ RUN set -x && apt-get update && \
 # Try drush 13.x-dev if the above fails.
   composer require drush/drush:13.x-dev || \
 # Try drush 11.x-dev if the above fails.
-  composer require drush/drush:11.x-dev && \
+  composer require drush/drush:11.x-dev || \
+  composer require drush/drush:13.x-dev && \
   mkdir -p $DRUPAL_DOCROOT/sites/default/files && \
   chgrp www-data $DRUPAL_DOCROOT/sites/default/files && \
   chmod 2775 $DRUPAL_DOCROOT/sites/default/files && \
