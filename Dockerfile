@@ -21,6 +21,8 @@ RUN set -x && apt-get update && \
   ) && \
   cd $DRUPAL_COMPOSER_ROOT && \
   composer require drush/drush || \
+# Try drush 13.x-dev if the above fails.
+  composer require drush/drush:13.x-dev || \
 # Try drush 11.x-dev if the above fails.
   composer require drush/drush:11.x-dev && \
   mkdir -p $DRUPAL_DOCROOT/sites/default/files && \
