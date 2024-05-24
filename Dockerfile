@@ -20,11 +20,11 @@ RUN set -x && apt-get update && \
     composer create-project drupal/recommended-project:$DRUPAL_VERSION $DRUPAL_COMPOSER_ROOT \
   ) && \
   cd $DRUPAL_COMPOSER_ROOT && \
-  composer require drush/drush || \
+  composer require drush/drush --with-all-dependencies || \
 # Try drush 13.x-dev if the above fails.
-  composer require drush/drush:13.x-dev || \
+  composer require drush/drush:13.x@beta chi-teck/drupal-code-generator:4.x-dev --with-all-dependencies || \
 # Try drush 11.x-dev if the above fails.
-  composer require drush/drush:11.x-dev && \
+  composer require drush/drush:11.x-dev --with-all-dependencies && \
   mkdir -p $DRUPAL_DOCROOT/sites/default/files && \
   chgrp www-data $DRUPAL_DOCROOT/sites/default/files && \
   chmod 2775 $DRUPAL_DOCROOT/sites/default/files && \
