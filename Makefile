@@ -1,7 +1,8 @@
 # Run "make help" to see a description of the targets in this Makefile.
 
 # The destination image to push to.
-export DESTINATION_DOCKER_IMAGE ?= q0rban/tugboat-drupal
+export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
+export DOCKER_IMAGE_MIRROR ?= q0rban/tugboat-drupal
 
 ## You probably don't need to modify any of the following.
 # Look up the versions of Drupal to create tags for by querying the Composer
@@ -58,6 +59,7 @@ targets: ## Print out the available make targets.
 push-image: tag ## Push the tagged images to the docker registry.
 #	# Push the images.
 	docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
+	docker push --all-tags ${DOCKER_IMAGE_MIRROR}
 #	# Clean up after ourselves.
 	$(MAKE) clean
 
@@ -70,14 +72,18 @@ ${BUILD_DIR}/build-image-%: ${BUILD_DIR}
 	  --build-arg DRUPAL_VERSION=$(*) \
 	  --build-arg PHP_VERSION=$(PHP_VERSION) \
 	  -t $(DESTINATION_DOCKER_IMAGE):$(*) .
+	docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(*)
 #	# If this is the most recent major and minor version, tag it as such.
 	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN); \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ_MIN); \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ); \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ); \
 	fi
 #	# If this is the latest stable Drupal version, tag it with latest.
 	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
 	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest; \
+	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):latest; \
 	fi
 	@touch $(@)
 
@@ -88,5 +94,6 @@ ${BUILD_DIR}:
 clean: ## Clean up all locally tagged Docker images and build directories.
 #	# Delete all image tags.
 	-docker rmi $(addprefix $(DESTINATION_DOCKER_IMAGE):,$(DRUPAL_VERSIONS))
+	-docker rmi $(addprefix $(DOCKER_IMAGE_MIRROR):,$(DRUPAL_VERSIONS))
 #	# Remove the build dir.
 	-rm -r ${BUILD_DIR}
