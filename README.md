@@ -23,6 +23,6 @@ of the
 [`drupal/recommended-project`](https://github.com/drupal/recommended-project/tags)
 Composer project. In addition, `[MAJOR]` and `[MAJOR].[MINOR]` tags are
 available. For example, if you would like the latest `10.0.x` version of Drupal
-core, you can use `q0rban/tugboat-drupal:10.0`. If you only want to specify the
+core, you can use `tugboatqa/tugboat-drupal:10.0`. If you only want to specify the
 major version and keep up with minor releases automatically, you can use
-`q0rban/tugboat-drupal:10`.
+`tugboatqa/tugboat-drupal:10`.
