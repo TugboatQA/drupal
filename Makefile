@@ -1,5 +1,7 @@
 # Run "make help" to see a description of the targets in this Makefile.
 
+SHELL := /bin/bash
+
 # The destination image to push to.
 export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
 export DOCKER_IMAGE_MIRROR ?= q0rban/tugboat-drupal
