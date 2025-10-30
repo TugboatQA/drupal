@@ -83,15 +83,25 @@ add-phpalt-targets-%: ${BUILD_DIR}/tags-%
 	  done; \
 	fi
 
+.PHONY: generate-target-json
 generate-target-json: docker-bake.json
 	@test -n "$$key" && test -n "$$tags" && test -n "$$drupal_version" && test -n "$$php_version"
-
-	@export obj="$$(envsubst < templates/bakefile_target.template.json)"; \
-	jq \
+	@jq \
 	  --arg key "$$key" \
 	  --arg tags "$$tags" \
-	  --argjson obj "$$obj" \
-	  '.target += { ($$key): $$obj } | .group.default.targets += [$$key] | .target[$$key].tags = ($$tags | split(" "))' \
+	  --arg drupal_version "$$drupal_version" \
+	  --arg php_version "$$php_version" \
+	  '.target += { \
+	    ($$key): { \
+	      context: ".", \
+	      dockerfile: "Dockerfile", \
+	      args: { \
+	        DRUPAL_VERSION: $$drupal_version, \
+	        PHP_VERSION: $$php_version \
+	      }, \
+	      tags: ($$tags | split(" ")) \
+	    } \
+	  } | .group.default.targets += [$$key]' \
 	  docker-bake.json > newbake.json
 	@mv -f newbake.json docker-bake.json
 
@@ -121,7 +131,7 @@ ${BUILD_DIR}/drupal_versions: ${BUILD_DIR}
 	  sort -t '-' -uV -k 1.1,1.0 > $(@)
 
 docker-bake.json:
-	cp templates/bakefile.template.json docker-bake.json
+	@jq -n '{group: {default: {targets: []}}, target: {}}' > docker-bake.json
 
 ${BUILD_DIR}:
 	mkdir -p ${BUILD_DIR}
