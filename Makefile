@@ -91,17 +91,7 @@ generate-target-json: docker-bake.json
 	  --arg tags "$$tags" \
 	  --arg drupal_version "$$drupal_version" \
 	  --arg php_version "$$php_version" \
-	  '.target += { \
-	    ($$key): { \
-	      context: ".", \
-	      dockerfile: "Dockerfile", \
-	      args: { \
-	        DRUPAL_VERSION: $$drupal_version, \
-	        PHP_VERSION: $$php_version \
-	      }, \
-	      tags: ($$tags | split(" ")) \
-	    } \
-	  } | .group.default.targets += [$$key]' \
+	  '.target += {($$key): {context: ".", dockerfile: "Dockerfile", args: {DRUPAL_VERSION: $$drupal_version, PHP_VERSION: $$php_version}, tags: ($$tags | split(" "))}} | .group.default.targets += [$$key]' \
 	  docker-bake.json > newbake.json
 	@mv -f newbake.json docker-bake.json
 
