@@ -17,4 +17,3 @@ To create a custom image for your own project, you may fork this repository,
 edit the [Makefile](./Makefile) and modify:
 
 - `DESTINATION_DOCKER_IMAGE`: the location where the Docker image will be hosted.
-- `PHP_VERSION`: The version of PHP to use.

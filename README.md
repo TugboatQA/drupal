@@ -26,3 +26,10 @@ available. For example, if you would like the latest `10.0.x` version of Drupal
 core, you can use `tugboatqa/drupal:10.0`. If you only want to specify the
 major version and keep up with minor releases automatically, you can use
 `tugboatqa/drupal:10`.
+
+There are also some additional tags for alternate PHP versions for some of the
+versions of Drupal. Not all of the major Drupal versions have alternate PHP
+versions. See [Drupal PHP Requirements](https://www.drupal.org/docs/getting-started/system-requirements/php-requirements)
+for a list of which PHP versions are supported for different PHP versions, and
+the [`tugboatqa/drupal` tags](https://hub.docker.com/r/tugboatqa/drupal/tags)
+for a list of available tags.

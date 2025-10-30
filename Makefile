@@ -5,16 +5,7 @@ export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
 export DOCKER_IMAGE_MIRROR ?= q0rban/tugboat-drupal
 
 ## You probably don't need to modify any of the following.
-# Look up the versions of Drupal to create tags for by querying the Composer
-# drupal/recommended-project package, which can be found at
-# https://github.com/drupal/recommended-project
-# The sort command splits columns by hyphen and -u will ensure only uniques for
-# the first column, so that if 10.0.0 and 10.0.0-rc4 are in the list, only the
-# former will be used.
-export DRUPAL_VERSIONS := $(shell \
-  curl --silent https://api.github.com/repos/drupal/recommended-project/tags | \
-  jq -r '.[].name' | \
-  sort -t '-' -uV -k 1.1,1.0)
+export DRUPAL_VERSIONS = $(shell cat ${BUILD_DIR}/drupal_versions 2>/dev/null)
 # Today's date.
 export DATE := $(shell date "+%Y-%m-%d")
 # The directory to keep track of build steps.
@@ -32,10 +23,13 @@ export DRUPAL_LATEST := $(lastword $(DRUPAL_VERSIONS))
 # Determine the correct version of PHP for the Drupal version.
 # See https://www.drupal.org/docs/system-requirements/php-requirements
 D11_PHP_VERSION := 8.3
+D11_PHP_ALT_VERSIONS := 8.4
 D10_PHP_VERSION := 8.1
+D10_PHP_ALT_VERSIONS := 8.2 8.3
 D9_PHP_VERSION := 8.1
 D8_PHP_VERSION := 7.4
 export PHP_VERSION = $(D$(DRUPAL_MAJ)_PHP_VERSION)
+export PHP_ALT_VERSIONS = $(D$(DRUPAL_MAJ)_PHP_ALT_VERSIONS)
 
 .PHONY: all
 all: push-image ## Run all the targets in this Makefile required to tag a new Docker image.
@@ -56,7 +50,7 @@ targets: ## Print out the available make targets.
 	@printf "\nFor more targets and info see the comments in the Makefile.\n"
 
 .PHONY: push-image
-push-image: tag ## Push the tagged images to the docker registry.
+push-image: build ## Push the tagged images to the docker registry.
 #	# Push the images.
 	docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
 	docker push --all-tags ${DOCKER_IMAGE_MIRROR}
@@ -64,28 +58,70 @@ push-image: tag ## Push the tagged images to the docker registry.
 	$(MAKE) clean
 
 .PHONY: tag
-tag: $(addprefix ${BUILD_DIR}/build-image-,$(DRUPAL_VERSIONS)) ## Create the tags for each of the Drupal versions.
+build: ${BUILD_DIR}/drupal_versions ## Run docker buildx.
+	@$(MAKE) $(addprefix add-target-,$(DRUPAL_VERSIONS))
+	@$(MAKE) $(addprefix add-phpalt-targets-,$(DRUPAL_VERSIONS))
+	docker buildx bake
 
-${BUILD_DIR}/build-image-%: ${BUILD_DIR}
-#	# Build the Dockerfile in this directory.
-	docker build \
-	  --build-arg DRUPAL_VERSION=$(*) \
-	  --build-arg PHP_VERSION=$(PHP_VERSION) \
-	  -t $(DESTINATION_DOCKER_IMAGE):$(*) .
-	docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(*)
-#	# If this is the most recent major and minor version, tag it as such.
+.PHONY: add-target-%
+add-target-%: ${BUILD_DIR}/tags-% ## Build the target for a drupal version and add it to the bake file.
+	@$(MAKE) generate-target-json \
+	  key="$(subst .,-,$(*))" \
+ 	  tags="$$(xargs < ${BUILD_DIR}/tags-$(*))" \
+	  drupal_version="$(*)" \
+	  php_version="$(PHP_VERSION)";
+
+.PHONY: add-phpalt-targets-%
+add-phpalt-targets-%: ${BUILD_DIR}/tags-%
+	@if test -n "$(PHP_ALT_VERSIONS)"; then \
+	  for PHP_ALT_VERSION in $(PHP_ALT_VERSIONS); do \
+		$(MAKE) generate-target-json \
+	      key="$(subst .,-,$(*))-php$${PHP_ALT_VERSION//\./-}" \
+	      drupal_version="$(*)" \
+	      php_version="$$PHP_ALT_VERSION" \
+	      tags="$$(cat ${BUILD_DIR}/tags-$(*) | grep -v latest | sed -e "s/$$/-php$$PHP_ALT_VERSION/g" | xargs)"; \
+	  done; \
+	fi
+
+generate-target-json: docker-bake.json
+	@test -n "$$key" && test -n "$$tags" && test -n "$$drupal_version" && test -n "$$php_version"
+
+	@export obj="$$(envsubst < templates/bakefile_target.template.json)"; \
+	jq \
+	  --arg key "$$key" \
+	  --arg tags "$$tags" \
+	  --argjson obj "$$obj" \
+	  '.target += { ($$key): $$obj } | .group.default.targets += [$$key] | .target[$$key].tags = ($$tags | split(" "))' \
+	  docker-bake.json > newbake.json
+	@mv -f newbake.json docker-bake.json
+
+${BUILD_DIR}/tags-%: ${BUILD_DIR}
+	@echo "$(DESTINATION_DOCKER_IMAGE):$(*)" > $(@)
+	@echo "$(DOCKER_IMAGE_MIRROR):$(*)" >> $(@)
 	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN); \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ_MIN); \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ); \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ); \
+	  echo "$(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN)" >> $(@); \
+	  echo "$(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ_MIN)" >> $(@); \
+	  echo "$(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ)" >> $(@); \
+	  echo "$(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ)" >> $(@); \
 	fi
-#	# If this is the latest stable Drupal version, tag it with latest.
 	@if [ "$(*)" = "$(DRUPAL_LATEST)" ]; then \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DESTINATION_DOCKER_IMAGE):latest; \
-	  docker tag $(DESTINATION_DOCKER_IMAGE):$(*) $(DOCKER_IMAGE_MIRROR):latest; \
+	  echo "$(DESTINATION_DOCKER_IMAGE):latest" >> $(@); \
+	  echo "$(DOCKER_IMAGE_MIRROR):latest" >> $(@); \
 	fi
-	@touch $(@)
+
+${BUILD_DIR}/drupal_versions: ${BUILD_DIR}
+#	# Look up the versions of Drupal to create tags for by querying the Composer
+#	# drupal/recommended-project package, which can be found at
+#	# https://github.com/drupal/recommended-project
+#	# The sort command splits columns by hyphen and -u will ensure only uniques
+#	# for the first column, so that if 10.0.0 and 10.0.0-rc4 are in the list,
+#	# only the former will be used.
+	@curl --fail --silent https://api.github.com/repos/drupal/recommended-project/tags | \
+	  jq -r '.[].name' | \
+	  sort -t '-' -uV -k 1.1,1.0 > $(@)
+
+docker-bake.json:
+	cp templates/bakefile.template.json docker-bake.json
 
 ${BUILD_DIR}:
 	mkdir -p ${BUILD_DIR}
@@ -97,3 +133,4 @@ clean: ## Clean up all locally tagged Docker images and build directories.
 	-docker rmi $(addprefix $(DOCKER_IMAGE_MIRROR):,$(DRUPAL_VERSIONS))
 #	# Remove the build dir.
 	-rm -r ${BUILD_DIR}
+	-rm docker-bake.json
