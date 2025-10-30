@@ -63,7 +63,7 @@ push-image: build ## Push the tagged images to the docker registry.
 build: ${BUILD_DIR}/drupal_versions ## Run docker buildx.
 	@$(MAKE) $(addprefix add-target-,$(DRUPAL_VERSIONS))
 	@$(MAKE) $(addprefix add-phpalt-targets-,$(DRUPAL_VERSIONS))
-	docker buildx bake --parallel 2
+	docker buildx bake
 
 .PHONY: add-target-%
 add-target-%: ${BUILD_DIR}/tags-% ## Build the target for a drupal version and add it to the bake file.
