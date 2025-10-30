@@ -1,0 +1,11 @@
+{
+  "args": {
+    "DRUPAL_VERSION": "$drupal_version",
+    "PHP_VERSION": "$php_version"
+  },
+  "context": ".",
+  "dockerfile": "Dockerfile",
+  "output": ["type=image"],
+  "pull": true,
+  "platforms": ["linux/amd64"]
+}
