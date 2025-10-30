@@ -10,7 +10,6 @@ jobs:
       # build and push Docker image
       - run:
           name: Build image and push to Docker Hub
-          no_output_timeout: 90m
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
             make
