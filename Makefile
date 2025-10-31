@@ -1,10 +1,13 @@
 # Run "make help" to see a description of the targets in this Makefile.
-
 SHELL := /bin/bash
 
 # The destination image to push to.
 export DESTINATION_DOCKER_IMAGE ?= tugboatqa/drupal
 export DOCKER_IMAGE_MIRROR ?= q0rban/tugboat-drupal
+
+# Whether to push to the registry or not. Set to 1 to push. Any other value
+# will not push to the registry.
+export PUSH ?= 0
 
 ## You probably don't need to modify any of the following.
 export DRUPAL_VERSIONS = $(shell cat ${BUILD_DIR}/drupal_versions 2>/dev/null)
@@ -34,7 +37,7 @@ export PHP_VERSION = $(D$(DRUPAL_MAJ)_PHP_VERSION)
 export PHP_ALT_VERSIONS = $(D$(DRUPAL_MAJ)_PHP_ALT_VERSIONS)
 
 .PHONY: all
-all: push-image ## Run all the targets in this Makefile required to tag a new Docker image.
+all: build ## Run all the targets in this Makefile required to tag a new Docker image.
 
 .PHONY: help
 help: ## Print out the help for this Makefile.
@@ -51,19 +54,16 @@ targets: ## Print out the available make targets.
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@printf "\nFor more targets and info see the comments in the Makefile.\n"
 
-.PHONY: push-image
-push-image: build ## Push the tagged images to the docker registry.
-#	# Push the images.
-	docker push --all-tags ${DESTINATION_DOCKER_IMAGE}
-	docker push --all-tags ${DOCKER_IMAGE_MIRROR}
-#	# Clean up after ourselves.
-	$(MAKE) clean
-
 .PHONY: tag
 build: ${BUILD_DIR}/drupal_versions ## Run docker buildx.
 	@$(MAKE) $(addprefix add-target-,$(DRUPAL_VERSIONS))
 	@$(MAKE) $(addprefix add-phpalt-targets-,$(DRUPAL_VERSIONS))
-	docker buildx bake
+	@if [[ $(PUSH) -eq 1 ]]; then \
+	  docker buildx bake --push; \
+	else \
+	  docker buildx bake; \
+	fi
+	$(MAKE) clean
 
 .PHONY: add-target-%
 add-target-%: ${BUILD_DIR}/tags-% ## Build the target for a drupal version and add it to the bake file.
@@ -115,12 +115,26 @@ ${BUILD_DIR}/drupal_versions: ${BUILD_DIR}
 #	# Look up the versions of Drupal to create tags for by querying the Composer
 #	# drupal/recommended-project package, which can be found at
 #	# https://github.com/drupal/recommended-project
+	@curl --fail --silent https://api.github.com/repos/drupal/recommended-project/tags?per_page=100 | \
+	  jq -r '.[].name' > $(@).tmp
+	@curl --fail --silent https://api.github.com/repos/drupal/recommended-project/tags?per_page=100\&page=2 | \
+	  jq -r '.[].name' >> $(@).tmp
+#	# Get supported versions by querying the drupal.org API. The API returns XML
+#	# which we parse using grep. Yes, yes, that's not ideal, but the match is
+#	# fairly basic, and alternatives require using separate libraries with
+#	# dependencies.
+#	# The API returns core branches that are supported in a comma-separated
+#	# string, e.g "10.4.,10.5.,10.6.,11.1.,11.2.,11.3.". We then convert that
+#	# to a regular expression by replacing commas with pipes and escaping:
+#	# ^(10\.4\.|10\.5\.|10\.6\.|11\.1\.|11\.2\.|11\.3\.)
+	@export supported_versions_regexp=$$(curl --fail --silent https://updates.drupal.org/release-history/drupal/current | \
+	  grep -o '<supported_branches>.*</supported_branches>' | \
+	  sed -e 's/.*>\(.*\)<.*/\1/' -e 's/,/|/g' -e 's/\./\\&/g'); \
+	grep -E "^($$supported_versions_regexp)" $(@).tmp > $(@).tmp2
 #	# The sort command splits columns by hyphen and -u will ensure only uniques
 #	# for the first column, so that if 10.0.0 and 10.0.0-rc4 are in the list,
 #	# only the former will be used.
-	@curl --fail --silent https://api.github.com/repos/drupal/recommended-project/tags | \
-	  jq -r '.[].name' | \
-	  sort -t '-' -uV -k 1.1,1.0 > $(@)
+	@sort -t '-' -uV -k 1.1,1.0 -o $(@) $(@).tmp2
 
 docker-bake.json:
 	@jq -n '{group: {default: {targets: []}}, target: {}}' > docker-bake.json
@@ -129,10 +143,7 @@ ${BUILD_DIR}:
 	mkdir -p ${BUILD_DIR}
 	@printf "Prepared build environment.\n"
 
-clean: ## Clean up all locally tagged Docker images and build directories.
-#	# Delete all image tags.
-	-docker rmi $(addprefix $(DESTINATION_DOCKER_IMAGE):,$(DRUPAL_VERSIONS))
-	-docker rmi $(addprefix $(DOCKER_IMAGE_MIRROR):,$(DRUPAL_VERSIONS))
+clean: ## Clean up all build files.
 #	# Remove the build dir.
 	-rm -r ${BUILD_DIR}
 	-rm docker-bake.json
