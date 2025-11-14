@@ -15,7 +15,7 @@ jobs:
             PUSH: 1
           command: |
             echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker buildx create --use --buildkitd-flags '--oci-max-parallelism=2'
+            docker buildx create --use --buildkitd-flags '--oci-max-parallelism=3'
             make
 
 workflows:
