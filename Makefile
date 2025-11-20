@@ -97,6 +97,15 @@ generate-target-json: docker-bake.json
 	  docker-bake.json > newbake.json
 	@mv -f newbake.json docker-bake.json
 
+.PHONY: debug-tags
+debug-tags: ${BUILD_DIR}/drupal_versions ## Echo the tags for each version for debugging purposes.
+	@$(MAKE) $(addprefix ${BUILD_DIR}/tags-,$(DRUPAL_VERSIONS))
+	@for x in ${BUILD_DIR}/tags-*; do \
+	  echo; \
+	  echo "== $$x =="; \
+	  cat "$$x"; \
+	done
+
 ${BUILD_DIR}/tags-%: ${BUILD_DIR}
 	@echo "$(DESTINATION_DOCKER_IMAGE):$(*)" > $(@)
 	@echo "$(DOCKER_IMAGE_MIRROR):$(*)" >> $(@)
