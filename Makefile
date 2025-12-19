@@ -23,6 +23,9 @@ export DRUPAL_MAJ_MIN = $(shell echo $(*) | awk -F . '{print $$1"."$$2}')
 # Determine the most recent version for this Drupal version. For example, given
 # versions 8.8.1, 8.8.2, 8.8.3, if 8.8.1 is passed, 8.8.3 is returned.
 export DRUPAL_LATEST_MAJ_MIN = $(lastword $(filter $(DRUPAL_MAJ_MIN).%,$(DRUPAL_VERSIONS)))
+# Determine the most recent major version for this Drupal version. Given
+# versions 11.1.0, 11.2.0, 11.3.0, if 11.1.0 is passed, 11.3.0 is returned.
+export DRUPAL_LATEST_MAJ = $(lastword $(filter $(DRUPAL_MAJ).%,$(DRUPAL_VERSIONS)))
 # Determine the most recent stable version of Drupal, which is the lastword.
 export DRUPAL_LATEST := $(lastword $(DRUPAL_VERSIONS))
 # Determine the correct version of PHP for the Drupal version.
@@ -99,6 +102,10 @@ generate-target-json: docker-bake.json
 
 .PHONY: debug-tags
 debug-tags: ${BUILD_DIR}/drupal_versions ## Echo the tags for each version for debugging purposes.
+	@echo "== Detected Drupal Versions =="
+	@cat ${BUILD_DIR}/drupal_versions
+	@echo
+	@echo "== Docker Tags =="
 	@$(MAKE) $(addprefix ${BUILD_DIR}/tags-,$(DRUPAL_VERSIONS))
 	@for x in ${BUILD_DIR}/tags-*; do \
 	  echo; \
@@ -112,6 +119,8 @@ ${BUILD_DIR}/tags-%: ${BUILD_DIR}
 	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ_MIN)" ]; then \
 	  echo "$(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ_MIN)" >> $(@); \
 	  echo "$(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ_MIN)" >> $(@); \
+	fi
+	@if [ "$(*)" = "$(DRUPAL_LATEST_MAJ)" ]; then \
 	  echo "$(DESTINATION_DOCKER_IMAGE):$(DRUPAL_MAJ)" >> $(@); \
 	  echo "$(DOCKER_IMAGE_MIRROR):$(DRUPAL_MAJ)" >> $(@); \
 	fi
