@@ -152,7 +152,13 @@ ${BUILD_DIR}/drupal_versions: ${BUILD_DIR}
 #	# The sort command splits columns by hyphen and -u will ensure only uniques
 #	# for the first column, so that if 10.0.0 and 10.0.0-rc4 are in the list,
 #	# only the former will be used.
-	@sort -t '-' -uV -k 1.1,1.0 -o $(@) $(@).tmp2
+	@sort -t '-' -uV -k 1.1,1.0 $(@).tmp2 > $(@).tmp3
+#	# Keep only the latest patch version per major.minor branch. Drupal's
+#	# security policy supports only the latest patch in a supported minor, so
+#	# older patches package dependency versions with advisories that were
+#	# fixed in later patches.
+	@awk -F. '{lines[$$1"."$$2]=$$0} END {for (k in lines) print lines[k]}' $(@).tmp3 | \
+	  sort --version-sort > $(@)
 
 docker-bake.json:
 	@jq -n '{group: {default: {targets: []}}, target: {}}' > docker-bake.json
