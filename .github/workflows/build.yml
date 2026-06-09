@@ -1,12 +1,20 @@
-name: Build and Push Docker Images
+name: Build Docker Images
 
 on:
-  # Manual trigger with approval
-  workflow_dispatch:
-
-  # Scheduled run at 3am every Saturday
+  pull_request:
   schedule:
+    # Saturday at 3am
     - cron: '0 3 * * 6'
+  workflow_dispatch:
+    inputs:
+      push:
+        description: 'Push images to Docker Hub'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions: {}
 
@@ -15,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      PUSH: ${{ ((github.event_name == 'schedule' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.push)) && '1' || '0' }}
 
     steps:
       - name: Checkout code
@@ -31,13 +41,13 @@ jobs:
           buildkitd-flags: --oci-max-parallelism=6
 
       - name: Login to Docker Hub
+        if: env.PUSH == '1'
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASS }}
 
-      - name: Build and push Docker images
+      - name: Build Docker images
         env:
           BUILDKIT_PROGRESS: plain
-          PUSH: 1
         run: make
